@@ -1,16 +1,24 @@
-\#EBAME4: mmseqs search vs cluster hhconsensus
+In this tutorial we will pick a random metagenome from [**MGnify**](https://www.ebi.ac.uk/metagenomics) and we will explore the functional fraction that has not been annotated.
 
-# EBI metagenome - predicted CDS unannotated
+-   [Refining the unknown](#refining-the-unknown)
+-   [Exploring the non-annotated of the unannotated fraction](#exploring-the-non-annotated-of-the-unannotated-fraction)
+-   [Exploring for remote homologies](#exploring-for-remote-homologies)
+    -   [First unannotated sequence](#first-unannotated-sequence)
+    -   [Second unannotated sequence](#second-unannotated-sequence)
+    -   [Third unannotated sequence](#third-unannotated-sequence)
+-   [Adding contextual data to the unknowns](#adding-contextual-data-to-the-unknowns)
 
-For the tutorial we will use the study **[MGYS00002304](https://www.ebi.ac.uk/metagenomics/studies/MGYS00002304)** and the sample **[ERS614327](https://www.ebi.ac.uk/metagenomics/samples/)**
+Let's go to [**MGnify**](https://www.ebi.ac.uk/metagenomics) and have a look at the study **[MGYS00002304](https://www.ebi.ac.uk/metagenomics/studies/MGYS00002304)** and the sample **[ERS614327](https://www.ebi.ac.uk/metagenomics/samples/)**
 
 > This projects explores the functional diversity and activity of rocky subseafloor microbial communities in hydrothermal vent systems. Samples were collected in 2013 from a number of low temperature diffuse fluid vents at Axial seamount, located in the northeast Pacific Ocean. Shotgun metagenomics and metatranscriptomics were performed on four diffuse vent samples. Previous work at this site determined the taxonomic structure and distribution of microbial communities in venting fluids, but the contribution and mechanisms of the different redox driven metabolisms and the impact these reactions have on vent chemical signatures have not been fully characterized. This study helps to determine the genetic potential and expression patterns of the largely uncharacterized subseafloor microbial community and shows how these patterns change across the complicated biogeochemical gradients of hydrothermal vent systems.
+>
+> **NOTE**: Here is the original publication \[[**link**](https://onlinelibrary.wiley.com/doi/abs/10.1111/1462-2920.14011)]
 
-This sample was assembled and analysed with the **[MGnify pipeline](https://www.ebi.ac.uk/metagenomics/pipelines/4.1)** (4.1). For this tutorial we will focus on the **[functional fraction](https://www.ebi.ac.uk/metagenomics/analyses/MGYA00153302#functional)** of the MGnify pipeline:
+This sample was assembled and analysed with the **[MGnify pipeline](https://www.ebi.ac.uk/metagenomics/pipelines/4.1)** (4.1). Let's have  look at the **[functional fraction](https://www.ebi.ac.uk/metagenomics/analyses/MGYA00153302#functional)** of the MGnify pipeline:
 
 In total the pipeline identified 207,375 CDS and was able to assign a function to 122,456. The MGnify pipeline did a good job assigning a function to a 59% of the predicted CDS. What ca we do with the remaining 40%, this is a quite chunk of sequences that in most of the cases will be discarded. Let's see what we can do with those uncharacterised sequences.
 
-> Use the Appliance [Marine Microbiome](https://biosphere.france-bioinformatique.fr/catalogue/appliance/125/), and load the cloud flavour **ifb.m4.2xlarge** in ifb-core-cloud
+> Use the Appliance [**Marine Microbiome**](https://biosphere.france-bioinformatique.fr/catalogue/appliance/125/), and load the cloud flavour **ifb.m4.2xlarge** in ifb-core-cloud
 
 We will create a new folder for the tutorial where we will run all the analyses:
 
@@ -19,34 +27,35 @@ $ mkdir EBAME4_unknowns
 $ cd  EBAME4_unknowns
 ```
 
-Time to get the [ORFs](https://www.ebi.ac.uk/metagenomics/analyses/MGYA00153302#download) that couldn't be annotated by MGnify
+Time to get the [**ORFs**](https://www.ebi.ac.uk/metagenomics/analyses/MGYA00153302#download) that couldn't be annotated by MGnify
 
 ```bash
 $ wget https://www.ebi.ac.uk/metagenomics/api/v1/analyses/MGYA00153302/file/OCRB01_FASTA_CDS_unannotated.faa.gz
 ```
 
-We will retrieve the [consensus](https://en.wikipedia.org/wiki/Consensus_sequence) sequences of the approach we showed during the lectures to tackle the unknown:
+We will retrieve the [**consensus**](https://en.wikipedia.org/wiki/Consensus_sequence) sequences of the approach we showed during the lectures to tackle the unknown:
 
 ```bash
 $ wget http://ebame4.metagenomics.eu/data/cluster_consensus.fasta.gz
 ```
 
-# Searching for the unknowns:
+## Refining the unknown
 
-MMseqs2 needs to convert the amino acid FASTA file to their DB format ([+info](https://github.com/soedinglab/MMseqs2/wiki#mmseqs2-database-format))
+MMseqs2 needs to convert the amino acid FASTA file to their DB format \[[**+info**](https://github.com/soedinglab/MMseqs2/wiki#mmseqs2-database-format)]
 
 ```bash
 $ mmseqs createdb OCRB01_FASTA_CDS_unannotated.faa.gz OCRB01_FASTA_CDS_unannotated_db
 $ mmseqs createdb cluster_consensus.fasta.gz cluster_cons_db
 ```
 
-Once the database is created, we will perform an iterative search, similar to a PSI-BLAST search using MMseqs2 with two iterations:
+Once the database is created, we will perform an iterative search, similar to a PSI-BLAST search using MMseqs2 with two iterations and an e-value cutoff of 1e-05:
 
 ```bash
 $ mmseqs search OCRB01_FASTA_CDS_unannotated_db cluster_cons_db results_db tmp -e 1e-05 --num-iterations 2
 ```
 
-> This would take around 8 minutes
+> This would take around 8 minutes  
+> **NOTE:** In a real world example we would use a more stringent threshold to assign a hit. We would use a combination of coverage and bitscore/e-value. The bitscore per column is a good alternative to evaluate the homology observed
 
 Let's see how many hits we get:
 
@@ -55,7 +64,7 @@ $ wc -l results_db
 1727417
 ```
 
-MMseqs2 has a way to identify the best hit using an iteration within different sensitivity levels ([+info](https://github.com/soedinglab/MMseqs2/wiki#how-to-find-the-best-hit-the-fastest-way)). This takes a little longer and for the sake of time we will take a shortcut and get the first hit (ordered by e-value and bit score):
+MMseqs2 has a way to identify the best hit using an iteration within different sensitivity levels \[[**+info**](https://github.com/soedinglab/MMseqs2/wiki#how-to-find-the-best-hit-the-fastest-way)]. This takes a little longer and for the sake of time we will take a shortcut and get the first hit (ordered by e-value and bit score):
 
 ```bash
 $ mmseqs filterdb results_db firsthits_db --extract-lines 1
@@ -80,17 +89,17 @@ ENA-OCRB01101445-OCRB01101445.1-metagenome-genome-assembly--contig:-NODE-101445-
 ENA-OCRB01043521-OCRB01043521.1-metagenome-genome-assembly--contig:-NODE-43521-length-347-cov-1.42808_1 24627654;gu;gu_c_16633;gu_sc_1  0.655   90      31      0       1       90      1       90      4.44E-31        120     90      128
 ```
 
-Let's count how many unannotated ORFS have a hit to our database:
+Let's count how many unannotated ORFs have a hit to our database:
 
 ```bash
 $ wc -l firsthits.tsv
 45660 firsthits.tsv
 ```
 
-As you can see 53% (45,660) of the ORFs that couldn't be annotated (84,919) they have a hit in our database. Let's see the distribution between the different categories:
+As you can see 53% (45,660) of the ORFs that couldn't be annotated (84,919) have a hit in our database. Let's see the distribution between the different categories:
 
 ```bash
-cut -f2 -d ';' firsthits.tsv | sort | uniq -c
+$ cut -f2 -d ';' firsthits.tsv | sort | uniq -c
   760 eu
 16609 gu
 15337 k
@@ -101,21 +110,21 @@ Let's extract the clusters that had a match:
 
 ```bash
 $ awk '!seen[$2]++{gsub(";","\t",$2); print $2}' firsthits.tsv  > matching_clusters.tsv
-wc -l matching_clusters.tsv
+$ wc -l matching_clusters.tsv
 36992 matching_clusters.tsv
 ```
 
-We will use this file to explore the environmental context where does clusters (specifically GUs and EUs) in R, but first let's see what is in the ORFs we were not able to assign in one of our clusters.
+We will use this file to explore the environmental context of these clusters (specifically GUs and EUs) in R, but first let's see what is in the ORFs we were not able to assign in one of our clusters.
 
-## Exploring the non-annotated of the non-annotated fraction
+## Exploring the non-annotated of the unannotated fraction
 
-We still have a 47% of the non-annotated ORFs that didn't have a hit in our DB, let's have a look what's going on...
+We still have a 47% of the unannotated ORFs that didn't have a hit in our DB, let's have a look what's going on...
 
 First we are going to get the sequences that didn't have a hit:
 
 ```bash
 $ awk '$3==1 {print $1}' results_db.index >  noHitSeqList
-wc -l  noHitSeqList
+$ wc -l  noHitSeqList
 39259 noHitSeqList
 ```
 
@@ -136,7 +145,7 @@ $ mmseqs cluster test_noHit test_noHit_clu tmp -c 0.8 --cov-mode 0 --min-seq-id 
 
 > This is would the step where you would update our clusters with the new sequences using **[clusterupdate](https://github.com/soedinglab/MMseqs2/wiki#updating-a-database-clustering-using-mmseqs-clusterupdate)** and running our curation/annotation workflow
 
-Now that we just get our clusters, let's see how many clusters we have and the size:
+Let's see how many clusters we have and the size:
 
 ```bash
 $ mmseqs result2stats test_noHit test_noHit test_noHit_clu test_noHit_clu.sizes --stat linecount
@@ -184,9 +193,9 @@ $ mmseqs result2flat test_noHit test_noHit test_noHit_clu_rep test_noHit_rep.fas
 
 > In this case we will use the representative sequences because the clusters are very tiny. In a real world example with multiple samples and larger clusters one would prefer to use the consensus sequences
 
-# Exploring for remote homologies
+## Exploring for remote homologies
 
-In order to dig deeper on those ORFs that we cannot annotate we will use [JackHMMER](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-431) and [HHBLITS](https://www.nature.com/articles/nmeth.1818) to look for remote homologies. Although both methods are slightly different
+In order to dig deeper on those ORFs that we cannot annotate we will use [**JackHMMER**](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-431) and [**HHBLITS**](https://www.nature.com/articles/nmeth.1818) to look for remote homologies. Although both methods are slightly different
 
 > Rob Finn has a very nice blog post explaining the utility of Jackhmmer on **[Cryptogenomicon](https://cryptogenomicon.org/2012/04/16/interactive-iterative-searches-using-jackhmmer/)**
 
@@ -208,16 +217,16 @@ $ awk '$1>=4{split($0,a,"-"); if (a[12] >= 300){print $0}}' test_noHit_clu_sizes
 
 We will select few of the sequences to explore the limitations of our database and approach. The main limiting factor is the coverage that we have in terms of different environments, if you remember, this metagenome comes from **hydrothermal vent systems**.
 
-Let's take a look to three of the non-annotated ORFs. Here are the parameters to use in HHblits and Jackhmmer:
+Let's take a look to three of the unannotated ORFs. Here are the parameters to use in HHblits and Jackhmmer:
 
--   **HHblits** will run with 3 iterations and using the [Uniclust](https://uniclust.mmseqs.com/) database
--   **Jackhmmer** will run with 3 iterations and using the [UniprotKB](https://www.uniprot.org/help/uniprotkb) database
+-   **HHblits** will run with 3 iterations and using the [**Uniclust**](https://uniclust.mmseqs.com/) database
+-   **Jackhmmer** will run with 3 iterations and using the [**UniprotKB**](https://www.uniprot.org/help/uniprotkb) database
 
-A reminder of the HHblits manual for understanding the results and select the potential remote hits:
+A reminder from the HHblits manual for understanding the results and select the potential remote hits:
 
 > Check probability and E-value: HHsearch and HHblits can detect homologous relationships far beyond the twilight zone, i.e., below 20% sequence identity. Sequence identity is therefore not an appropriate measure of relatedness anymore. The estimated probability of the template to be (at least partly) homologous to your query sequence is the most important criterion to decide whether a template HMM is actually homologous or just a high-scoring chance hit. When it is larger than 95%, say, the homology is nearly certain. Roughly speaking, one should give a hit serious consideration (i.e., check the other points in this list) whenever (1) the hit has > 50% probability, or (2) it has > 30% probability and is among the top three hits. The E-value is an alternative measure of statistical significance. It tells you how many chance hits with a score better than this would be expected if the database contained only hits unrelated to the query. At E-values below one, matches start to get marginally significant. Contrary to the probability, when calculating the E-value HHsearch and HHblits do not take into account the secondary structure similarity. Therefore, the probability is a more sensitive measure than the E-value.
 
-## First non-annotated sequence
+## First unannotated sequence
 
 ```bash
 $ grep -A1 'ENA-OCRB01017322-OCRB01017322.1-metagenome-genome-assembly--contig:-NODE-17322-length-513-cov-3.52402_1' test_noHit_rep.fasta
@@ -226,13 +235,13 @@ $ grep -A1 'ENA-OCRB01017322-OCRB01017322.1-metagenome-genome-assembly--contig:-
 TMSKLMIKDLNEAQSMDHAAMSAVRGGLTVGAMTFAADQSQTIGGPGSANVGNTTAVNAATFAPSTSLTEVSPISYTEMDMATLTNVANTGVSFA
 ```
 
-> **HHBLITS** results: [here](https://toolkit.tuebingen.mpg.de/#/jobs/2068744)  
-> **Jackhmmer**  results: [here](https://www.ebi.ac.uk/Tools/hmmer//results/7B1998A0-C54B-11E8-8D7E-ACFCDBC3747A.3/score)  
-> **Blastp** results: [here](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&RID=V3K1G1UH015)
+> **HHBLITS** results: [**here**](https://toolkit.tuebingen.mpg.de/#/jobs/2068744)  
+> **Jackhmmer**  results: [**here**](https://www.ebi.ac.uk/Tools/hmmer//results/7B1998A0-C54B-11E8-8D7E-ACFCDBC3747A.3/score)  
+> **Blastp** results: [**here**](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&RID=V3K1G1UH015)
 
 This example shows a cluster that is missing in our database and in case we would update our DB it would be classified as **genomic unknown**
 
-## Second non-annotated sequence
+## Second unannotated sequence
 
 ```bash
 $ grep -A1 'ENA-OCRB01014407-OCRB01014407.1-metagenome-genome-assembly--contig:-NODE-14407-length-558-cov-74.0139_1' test_noHit_rep.fasta
@@ -241,13 +250,13 @@ $ grep -A1 'ENA-OCRB01014407-OCRB01014407.1-metagenome-genome-assembly--contig:-
 IATVVAATSASAFMHDNNNGWGGNNMGPFSGGNNWGPMTGGNNMGPFMGGSNAGPFSGGQNMGPFGGGSNAGPFSGAQNWGPFQGGNNWLNNTDFGTKFNTSNKTDSNASGAADGSASGSGDANAKGVADAYAKGVADAQAQAQADAYAKGYADAQASGTASSDDAAK
 ```
 
-> **HHBLITS** results: [here](https://toolkit.tuebingen.mpg.de/#/jobs/8756404)  
-> **Jackhmmer**  results: [here](https://www.ebi.ac.uk/Tools/hmmer/results/9604472E-C53B-11E8-81AA-E1FBDBC3747A.2/score)  
-> **Blastp** results: [here](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&VIEW_RESULTS=FromRes&RID=V3CGA9B3014&UNIQ_OBJ_NAME=A_SearchResults_1g6qrK_2ccD_dvuLMePo3sj_GTXQl_12pd7u&QUERY_INDEX=0)
+> **HHBLITS** results: [**here**](https://toolkit.tuebingen.mpg.de/#/jobs/8756404)  
+> **Jackhmmer**  results: [**here**](https://www.ebi.ac.uk/Tools/hmmer/results/9604472E-C53B-11E8-81AA-E1FBDBC3747A.2/score)  
+> **Blastp** results: [**here**](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&VIEW_RESULTS=FromRes&RID=V3CGA9B3014&UNIQ_OBJ_NAME=A_SearchResults_1g6qrK_2ccD_dvuLMePo3sj_GTXQl_12pd7u&QUERY_INDEX=0)
 
-Another example of the limitations of our database and the importance of having specific databases. Have a look at Mick Watson's [behind the paper article](https://naturemicrobiologycommunity.nature.com/users/83344-mick-watson/posts/30668-microbiome-2-0-or-what-to-do-when-you-have-no-hits-to-public-databases)  (**[Stewart et al. 2018](https://www.nature.com/articles/s41467-018-03317-6?WT.mc_id=COM_NComms_1802_Watson)**). Our workflow would classify this cluster as **genomic unknonw**
+Another example of the limitations of our database and the importance of having specific databases. Have a look at Mick Watson's [**behind the paper article**](https://naturemicrobiologycommunity.nature.com/users/83344-mick-watson/posts/30668-microbiome-2-0-or-what-to-do-when-you-have-no-hits-to-public-databases)  (**[Stewart et al. 2018](https://www.nature.com/articles/s41467-018-03317-6?WT.mc_id=COM_NComms_1802_Watson)**). Our workflow would classify this cluster as **genomic unknonw**
 
-## Third non-annotated sequence
+## Third unannotated sequence
 
 ```bash
 $ grep -A1 'ENA-OCRB01030292-OCRB01030292.1-metagenome-genome-assembly--contig:-NODE-30292-length-402-cov-29.9222_1' test_noHit_rep.fasta
@@ -257,8 +266,12 @@ PLSVDDATALLKDVTNNANLIAHLTYGNQIVTPLTVDHILQLMNGVATHNRSWVITNLVNKNLMPSDLTP
 NQVRALLGVQNNEGSVAAIKSLTDQGLMQNDLSIADAFNILGDLSDISSVGNQRQQDRDNAIRV
 ```
 
-> **HHBLITS** results: [here](https://toolkit.tuebingen.mpg.de/#/jobs/7453964)  
-> **Jackhmmer**  results: [here](https://www.ebi.ac.uk/Tools/hmmer/results/D81B8DE0-C54D-11E8-9F41-1E0CE976C163/score)  
-> **Blastp** results: [here](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&RID=V3M8MWZB015)
+> **HHBLITS** results: [**here**](https://toolkit.tuebingen.mpg.de/#/jobs/7453964)  
+> **Jackhmmer**  results: [**here**](https://www.ebi.ac.uk/Tools/hmmer/results/D81B8DE0-C54D-11E8-9F41-1E0CE976C163/score)  
+> **Blastp** results: [**here**](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&RID=V3M8MWZB015)
 
 This cluster is an example of an **environmental unknown**, there are no clear homologies in any of the databases even we use very sensible methods that look for very remote homologies.
+
+## Adding contextual data to the unknowns
+
+For this part we will use t
