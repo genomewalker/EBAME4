@@ -8,7 +8,7 @@ In this tutorial we will pick a random metagenome from [**MGnify**](https://www.
     -   [Third unannotated sequence](#third-unannotated-sequence)
 -   [Adding contextual data to the unknowns](#adding-contextual-data-to-the-unknowns)
 
-Let's go to [**MGnify**](https://www.ebi.ac.uk/metagenomics) and have a look at the study **[MGYS00002304](https://www.ebi.ac.uk/metagenomics/studies/MGYS00002304)** and the sample **[ERS614327](https://www.ebi.ac.uk/metagenomics/samples/)**
+Let's go to [**MGnify**](https://www.ebi.ac.uk/metagenomics) and have a look at the study **[MGYS00002304](https://www.ebi.ac.uk/metagenomics/studies/MGYS00002304)** and the sample **[ERS614327](https://www.ebi.ac.uk/metagenomics/samples/ERS614327)**
 
 > This projects explores the functional diversity and activity of rocky subseafloor microbial communities in hydrothermal vent systems. Samples were collected in 2013 from a number of low temperature diffuse fluid vents at Axial seamount, located in the northeast Pacific Ocean. Shotgun metagenomics and metatranscriptomics were performed on four diffuse vent samples. Previous work at this site determined the taxonomic structure and distribution of microbial communities in venting fluids, but the contribution and mechanisms of the different redox driven metabolisms and the impact these reactions have on vent chemical signatures have not been fully characterized. This study helps to determine the genetic potential and expression patterns of the largely uncharacterized subseafloor microbial community and shows how these patterns change across the complicated biogeochemical gradients of hydrothermal vent systems.
 >

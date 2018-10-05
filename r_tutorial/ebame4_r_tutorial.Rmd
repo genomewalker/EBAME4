@@ -1,0 +1,101 @@
+---
+title: "EBAME4 tutorial"
+date: March 22, 2005
+output: 
+    html_document:
+      toc: true
+      toc_float: true
+editor_options: 
+  chunk_output_type: console
+---
+
+In this tutorial we are going to explore the unannotated ORFs that we have been able to assign to any of our categories. Let's load some libraries:
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggpubr)
+```
+
+and data:
+
+```{r}
+load(url("http://ebame4.metagenomics.eu/data/ebame4_r-tutorial.Rda"), verbose = TRUE)
+```
+We loaded 4 different objects:
+
+- **cluster_data**: contains the name of the cluster, the sample where the cluster has been found, the coverage-based abundances, proportion in a sample, the category, component id and super component id.
+- **cluster_taxonomy**: contains the assigned taxonomy for each of the members in a cluster. We used the [**2blca**](https://dx.doi.org/10.1038%2Fismej.2013.59) as implemented in [**MMseqs2**](https://github.com/soedinglab/mmseqs2/wiki#taxonomy-assignment-using-mmseqs-taxonomy).
+- **tara_cdata**: Contains the contextual data associated to the [**TARA OCEANS**](http://ocean-microbiome.embl.de) metagenomes
+- **hmp_cdata**: Contains the contextual data associated to the [**HMP1**](https://hmpdacc.org/) metagenomes
+
+## What are the taxonomies associated to the clusters we have a hit?
+
+We will explore the taxonomic assignations of the clusters that had a hit to the ORFs that were not annotated by MGnify. Having a taxonomic target can help us to find potential genomes where these ORFs have homologs and we might learn something from the genomic neighborhood or import some of them to anvi'o and run the pangenomics pipeline.
+
+First we will join the tables with the cluster information and the table with the associated taxonomy at the **Kingdom** rank:
+
+```{r k_taxonomy, out.width = '100%'}
+cluster_taxonomy %>%
+  group_by(kingdom, category) %>% # we group by the taxonomic rank and the cluster category
+  count() %>% # we count how many of the groups
+  ungroup() %>%
+  mutate(kingdom = fct_reorder(kingdom, n, .fun = "sum"), # we order the taxonomy based on the number of clusters
+         category = fct_relevel(category, c("k", "kwp", "gu", "eu"))) %>% # order the categories for visualization
+  ggplot(aes(kingdom, n)) +
+  geom_col() +
+  facet_wrap(~category, nrow = 1) +
+  theme_light() +
+  rotate() +
+  scale_y_continuous(labels = scales::comma) +
+  ylab("Number of clusters") +
+  xlab("Kingdom")
+```
+
+Don't you see anything strange in those results?
+
+<details><summary>Answer</summary>
+<p>
+
+**How can be possible that some EUs have a taxonomic annotation?**
+
+```{r}
+cluster_taxonomy %>% filter(category == "eu")
+```
+
+Let's have a look at one of them:
+
+>&gt;10061584;eu;eu_c_114901;eu_sc_79669
+ MQHMKRPLYRRSLKKLQNILSEVLRSSGNGGQIEFENALRRAIRHIQIIKRSAPRFGEDG
+ DSAMVEAYEIYDRLQRLSDYPQYFSDNTRKYPDRVVSDRSNLYTNARPAAIRWDAAAMMA
+ VPMGGEDILRNWWRPPPRPAPVKHFTQEEIEREYPAFTVRKKRSDDAGRD
+
+Check the information of the hit:
+https://www.uniprot.org/uniprot/A0A2E4DZM5
+
+Let's go to ENA from it comes from:
+https://www.ebi.ac.uk/ena/data/view/PAWC01000000
+
+Cool, it comes from an isolate... or not...
+Check the publication...
+</p>
+</details>
+
+## Where are our hits found?
+
+Now we will check in what temperature range are our hits found in the TARA dataset:
+
+```{r k_temperature, fig.height=2 ,out.width = '100%'}
+cluster_data %>%
+  inner_join(tara_cdata) %>%
+  mutate(category = fct_relevel(category, c("k", "kwp", "gu", "eu"))) %>% # order the categories for visualization
+  ggplot(aes(temperature)) +
+  geom_density(fill = "grey") +
+  facet_wrap(~category, nrow = 1) +
+  theme_light() +
+  ylab("Density") +
+  xlab(expression("Temperature " ( degree*C)))
+```
+
+Where is the peak of the distribution of the hits? What is the temperature of the **Anemone hydrothermal vent**? 
+
+Publication [[**link**](https://onlinelibrary.wiley.com/doi/abs/10.1111/1462-2920.14011)]
