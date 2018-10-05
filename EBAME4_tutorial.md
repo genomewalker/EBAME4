@@ -274,4 +274,6 @@ This cluster is an example of an **environmental unknown**, there are no clear h
 
 ## Adding contextual data to the unknowns
 
-For this part we will use t
+For this part we will use the contextual data and taxonomy to get some context of the clusters we have a hit.
+
+For this part we will use the code found here: \[[**R code**](https://raw.githubusercontent.com/genomewalker/EBAME4/master/r_tutorial/ebame4_r_tutorial.R)]\[[**Notebook**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/genomewalker/EBAME4/master/r_tutorial/ebame4_r_tutorial.html)]
