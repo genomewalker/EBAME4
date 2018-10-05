@@ -7,7 +7,7 @@ In this tutorial we will pick a random metagenome from [**MGnify**](https://www.
     -   [Second unannotated sequence](#second-unannotated-sequence)
     -   [Third unannotated sequence](#third-unannotated-sequence)
 -   [Adding contextual data to the unknowns](#adding-contextual-data-to-the-unknowns)
--   [How would you do it in real world](#how-would-you-do-it-in-real-world)
+-   [How to do it properly](#how-to-do-it-properly)
 
 Let's go to [**MGnify**](https://www.ebi.ac.uk/metagenomics) and have a look at the study **[MGYS00002304](https://www.ebi.ac.uk/metagenomics/studies/MGYS00002304)** and the sample **[ERS614327](https://www.ebi.ac.uk/metagenomics/samples/ERS614327)**
 
@@ -279,7 +279,7 @@ For this part we will use the contextual data and taxonomy to get some context o
 
 For this part we will use the code found here: \[[**R code**](https://raw.githubusercontent.com/genomewalker/EBAME4/master/r_tutorial/ebame4_r_tutorial.R)]\[[**Notebook**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/genomewalker/EBAME4/master/r_tutorial/ebame4_r_tutorial.html)]
 
-## How would you do it in real world
+## How to do it properly
 
 This is an example of how you would start a search using a single sequence and you would create a profile to increase the sensitivity of the search.
 
@@ -302,3 +302,5 @@ Then we will search the profiles against the unannotated ORFs:
 $ mmseqs search  cluster_cons_db_prof OCRB01_FASTA_CDS_unannotated_db OCRB01_FASTA_CDS_unannotated_db_aln tmp -e 1e-05 --num-iterations 2 --max-seqs 10000
 $ mmseqs swapresult  cluster_cons_db_prof OCRB01_FASTA_CDS_unannotated_db OCRB01_FASTA_CDS_unannotated_db_aln OCRB01_FASTA_CDS_unannotated_db_aln_swaped -e 1e-05
 ```
+
+> These are suggestions of Martin Steinegger
